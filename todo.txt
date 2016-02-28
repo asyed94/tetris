@@ -1,0 +1,8 @@
+===============
+Tetris Planning
+===============
+
+block objects need to be updated to hold their positions
+on the tetris board (gamePosX, gamePosY).
+
+this.blocks should now contain all created blocks.

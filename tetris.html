@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Tetris</title>
+		<script type="text/javascript" src="./js/phaser.js"></script>
+		<script type="text/javascript" src="./js/Tetris.js"></script>
+		<script type="text/javascript" src="./js/Boot.js"></script>
+		<script type="text/javascript" src="./js/MainMenu.js"></script>
+		<script type="text/javascript" src="./js/Game.js"></script>
+		<style type="text/css">
+			body {
+				margin: 0;
+			}
+		</style>
+	</head>
+
+	<body>
+
+		<!-- <div id="gameContainer" style="display: inline-block; width: 320px; height: 704px;"></div> -->
+		<div id="gameContainer"></div>
+
+		<script type="text/javascript">
+
+			window.onload = function() {
+				// Create Phaser game and inject it into the gameContainer div. Turn antialiasing off.
+				var game = new Phaser.Game(384, 480, Phaser.AUTO, 'gameContainer', null, false, false, null);
+
+				// As of now, Phaser can't scale the entire game to achieve
+				// a pixelated effect without antialiasing. Therefore, we must do scaling manually.
+				// The global scale factor will be 1.5 .
+
+				// Add States.
+				game.state.add('Boot', Tetris.Boot);
+				game.state.add('MainMenu', Tetris.MainMenu);
+				game.state.add('Game', Tetris.Game);
+
+				// Start Boot state.
+				game.state.start('Boot');
+			};
+
+		</script>
+	</body>
+
+</html>
