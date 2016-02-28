@@ -6,6 +6,12 @@ Tetris.Game.prototype = {
 	init: function() {
 		// Define global variables
 
+		// Number of rows in the game
+		this.numOfRows = 20;
+
+		// Number of blocks in a row
+		this.numOfBlocksInRow = 10;
+
 		// Holds all block objects in the game
 		this.blocks = [];
 
@@ -62,17 +68,38 @@ Tetris.Game.prototype = {
 			console.log(this.currentPiece[block].movement);
 		}
 
-		// Update blocks in motion
-		if (this.updateBlockPositions()) {
+		// Check for rows to clear
+		if (this.clearCompletedRows()) {
+			this.renderBlocks();
 			return;
 		}
-		// Or, check for rows to clear
-		else if (this.clearCompletedRows()) {
+		// Or, update blocks with gravity
+		else if (this.updateBlockPositions()) {
+			this.renderBlocks();
 			return;
 		}
 		// Or, introduce new piece
 		else {
 			this.createRandStandardPiece();
+			this.renderBlocks();
+		}
+	},
+
+	renderBlocks: function() {
+		// For all blocks
+		var currentBlock = undefined;
+		for (block in this.blocks) {
+			currentBlock = this.blocks[block]
+
+			// Delete sprite/obj for removed blocks
+			if (currentBlock.removed) {
+				currentBlock.sprite.destroy();
+				this.blocks.splice(block);
+				continue;
+			}
+
+			// Change block sprites pixel pos to reflect game pos
+			currentBlock.sprite.y = this.gamePosToCoord(currentBlock.gamePosX, currentBlock.gamePosY);
 		}
 	},
 
@@ -81,6 +108,10 @@ Tetris.Game.prototype = {
 	},
 
 	updateBlockPositions: function() {
+		return false;
+
+
+/*		
 		var didBlockMove = false;
 
 		// Loop through all game positions
@@ -116,6 +147,7 @@ Tetris.Game.prototype = {
 		}
 
 		return didBlockMove;
+*/
 	},
 
 	// Using this.nextPiece, puts nextPiece on the board and picks a new random nextPiece.
@@ -235,7 +267,7 @@ Tetris.Game.prototype = {
 	 *   0, 0, 0, 0 ]
 	 * 
 	 */
-	createPiece: function(blocksArray, posX, posY, initMovement) {
+	createPiece: function(blocksArray, posX, posY, initGravity) {
 		// Place to store the piece
 		var thisPiece = [];
 
@@ -276,7 +308,7 @@ Tetris.Game.prototype = {
 				}
 
 				// Create the block
-				thisPiece.push(this.createBlock(blockPosX, blockPosY, blockColor, initMovement));
+				thisPiece.push(this.createBlock(blockPosX, blockPosY, blockColor, initGravity));
 			}
 		}
 
@@ -285,12 +317,13 @@ Tetris.Game.prototype = {
 
 	// Creates a new block at the given gamePos and adds it to this.blocks
 	// Returns the newly created block.
-	createBlock: function(gamePosX, gamePosY, color, initMovement) {
+	createBlock: function(gamePosX, gamePosY, color, initGravity) {
 		var newBlock = {
 			sprite: this.game.add.sprite(this.gamePosToCoord(gamePosX), this.gamePosToCoord(gamePosY), color),
-			movement: initMovement,
+			gravity: initGravity,
 			gamePosX: gamePosX,
-			gamePosY: gamePosY
+			gamePosY: gamePosY,
+			removed: false
 		};
 		newBlock.sprite.scale = new PIXI.Point(1.5, 1.5);
 
