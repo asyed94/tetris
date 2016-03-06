@@ -129,28 +129,39 @@ Tetris.Piece.prototype.settle = function() { // Block[]: Makes the Piece station
 
 
 // LogicHandler class extends GameObject
-Tetris.LogicHandler = function(shapeInfoArray) {
+Tetris.LogicHandler = function(game) {
 	// Properties
 	Tetris.GameObject.call(this, game);
 
 	// ShapeInfo[]; Holds ShapeInfo objects for all possible types of Pieces in the game.
-	this.allPossiblePieces = shapeInfoArray;
+	this.allPossiblePieces = undefined;
 	// Piece; The current, actively-falling piece.
-	this.currentPiece
+	this.currentPiece = undefined;
 	// Piece; The next piece to drop once the current piece has settled.
-	this.nextPiece
+	this.nextPiece = undefined;
 	// Block[]; Holds all Block objects on the game board that are not part of the currentPiece. Once current piece has settled, its blocks get added too.
-	this.blocks
+	this.blocks = [];
 	// num; Number of time steps elapsed since the start of the game.
-	this.numOfTimeSteps
+	this.numOfTimeSteps = 0;
 	// num; The current player score.
-	this.score
+	this.score = 0;
 };
 // Methods
 Tetris.LogicHandler.prototype = Object.create(Tetris.GameObject.prototype);
 Tetris.LogicHandler.prototype.constructor = Tetris.LogicHandler;
 Tetris.LogicHandler.prototype.constructor = Tetris.LogicHandler;
 Tetris.LogicHandler.prototype.executeStep = function() { // void: Executes the subroutines for 1 time step of the game.
+	console.log(this.numOfTimeSteps)
+
+	// A little fun...
+	if (this.numOfTimeSteps % 4 == 3) {
+		console.log("It's alive!!!");
+	} else {
+		console.log("Lub...dub...");
+	}
+	
+	// Increment numOfTimeSteps
+	this.numOfTimeSteps ++;
 };
 Tetris.LogicHandler.prototype.moveGravitizedBlocks = function() { // void: Moves gravitized blocks down 1 game unit.
 };
@@ -207,11 +218,11 @@ Tetris.Game.prototype.create = function() {
 	scoreLabel.anchor = new PIXI.Point(0.5, 0.5);
 
 	// Create a LogicHandler object
-	var logic = new Tetris.LogicHandler();
+	var logic = new Tetris.LogicHandler(this.game);
 
 	// Create a timer to determine the duration between each "step" of the game
 	var stepTimer = this.game.time.create(false) // autoDestroy false
-	stepTimer.loop(500, logic.executeStep, this);
+	stepTimer.loop(500, logic.executeStep, logic);
 	stepTimer.start();
 };
 
