@@ -3,9 +3,9 @@ GAME FLOW
 =========
 
 On each time step:
-  1-Move gravitized blocks down
-  OR
   1-Remove filled rows
+  OR
+  1-Move gravitized blocks down
   OR
   1-Drop a new piece
 
@@ -24,7 +24,7 @@ GameObject = {
 
 LogicHandler extends GameObject = {
   currentPiece: // Piece; The current, actively-falling piece.
-  nextPiece: // Piece; The next piece to drop once the current piece has settled.
+  nextPiece: // ShapeInfo; The next piece to drop once the current piece has settled.
   allPossiblePieces: // ShapeInfo[]; Holds ShapeInfo objects for all possible types of Pieces in the game.
   blocks: // Block[]; Holds all Block objects on the game board that are not part of the currentPiece. Once current piece has settled, its blocks get added too.
   numOfTimeSteps: // num; Number of time steps elapsed since the start of the game.
@@ -34,13 +34,17 @@ LogicHandler extends GameObject = {
 
   +executeStep(): void // Executes the subroutines for 1 time step of the game.
 
-  +moveGravitizedBlocks(): void // Moves gravitized blocks down 1 game unit.
-  +updateBlockPositions() : void // Move blocks whose gamePos's have changed.
+  +moveGravitizedBlocks(): boolean // Moves gravitized GameObjects down 1 game unit. Returns true if anything was moved.
+  +removeFilledRows(): boolean // Checks for completed rows, and flags all blocks in row to be removed. Returns true if a completed row was found.
+  +dropPiece(): void // Drops a new Piece.
+
+
+  +updateAllGameObjects() : void // Update all GameObjects on the board.
 
   +checkCompletedRows(): void // Check for completed rows, mark all blocks in said rows for removal, and increment the score.
   +deleteRemovedBlocks(): void // Deletes blocks that have been flagged for removal from the game.
 
-  +pickNextPiece(): Piece // Returns a randomly selected Piece from allPossiblePieces.
+  +pickRandomPiece(): Piece // Returns a randomly selected Piece from allPossiblePieces.
   +dropNextPiece(): void // Transfer currentPiece blocks to blocks[] and delete currentPiece. Pick a piece from allPossiblePieces and deploy a copy of it as currentPiece.
 
   +checkBlockConditions(): void // Check ground conditions on all blocks not in currentPiece; set gravity accordingly.
@@ -55,7 +59,11 @@ Block extends GameObject = {
   isRemoved: // boolean; Will this block be removed from the game in the next time step?
 
   +Block(num gamePosX, num gamePosY, string color, boolean initGravitation): Block // Returns a Block object with the given parameters.
-  +destroy(): void // Destroys the Blocks associated sprite.
+  +moveDown(): void // Moves this block down by 1 game unit.
+  +moveRight(): void // Moves this block right by 1 game unit.
+  +moveLeft(): void // Moves this block left by 1 game unit.
+  +update(): void // Apply this blocks game properties to its sprite.
+  +destroy(): void // Destroys the associated Phaser sprite.
 }
 
 Piece extends GameObject = {
@@ -72,7 +80,6 @@ Piece extends GameObject = {
   gamePosX: // num; Horizontal position of the top-left block of this piece on the game board in block units. 0 is the left most position.
   gamePosY: // num; Vertical position of the top-left block of this piece on the game board in block units. 0 is the top most position.
   isGravitized: // boolean;  Will gravity pull down all blocks in this piece by 1 unit in the next time step?
-  isRemoved: // boolean; Will all blocks in this piece be removed from the game in the next time step?
 
   +Piece(ShapeInfo shapeInfo, num gamePosX, num gamePosY, string initOrientation, boolean initGravity): Piece // Returns a Piece object with the given parameters.
   +remakeBlocks(): void // Refresh this Piece's Blocks by deleting them then creating them anew.
@@ -80,6 +87,7 @@ Piece extends GameObject = {
   +moveRight(): void // Moves all blocks in this piece right by 1 game unit.
   +moveLeft(): void // Moves all blocks in this piece left by 1 game unit.
   +rotate(): void // Cycles the Piece's currentOrientation (UP, RIGHT, DOWN, LEFT).
+  +update(): void // Apply this Piece's game properties to its block's sprites.
   +settle(): Block[] // Makes the Piece stationary, empties and returns its blocks.
 }
 

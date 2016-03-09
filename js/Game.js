@@ -31,8 +31,27 @@ Tetris.Block = function(game, gamePosX, gamePosY, color, initGravitation) {
 };
 // Methods
 Tetris.Block.prototype = Object.create(Tetris.GameObject.prototype);
-Tetris.Block.prototype.constructor = Tetris.Block;
-// Destroy the block
+// void: Moves this block down by 1 game unit.
+Tetris.Block.prototype.moveDown = function() {
+	this.gamePosY += 1;
+}
+// void: Moves this block right by 1 game unit.
+Tetris.Block.prototype.moveRight = function() {
+	this.gamePosX += 1;
+}
+// void: Moves this block left by 1 game unit.
+Tetris.Block.prototype.moveLeft = function() {
+	this.gamePosX -= 1;
+}
+// void: Apply this block's game properties to its sprite.
+Tetris.Block.prototype.update = function() {
+	this.sprite.x = this.gamePosToCoord(this.gamePosX);
+	this.sprite.y = this.gamePosToCoord(this.gamePosY);
+
+	// If this block is to be removed, destroy it
+	if (this.isRemoved) { this.destroy(); }
+}
+// void: Destroy the block
 Tetris.Block.prototype.destroy = function() {
 	// Destroy the associated sprite
 	this.sprite.destroy();
@@ -54,22 +73,20 @@ Tetris.Piece = function(game, shapeInfo, gamePosX, gamePosY, initOrientation, in
 	this.gamePosY = gamePosY;
 	// boolean;  Will gravity pull down all blocks in this piece by 1 unit in the next time step?
 	this.isGravitized = initGravitation;
-	// boolean; Will all blocks in this piece be removed from the game in the next time step? Init to false.
-	this.isRemoved = false;
 
-	// Create blocks for the current orientation using the ShapeInfo object.
+	// Create blocks for the current orientation in the this.shapeInfo object.
+	this.remakeBlocks();
 };
 // Methods
 Tetris.Piece.prototype = Object.create(Tetris.GameObject.prototype);
 Tetris.Piece.prototype.constructor = Tetris.Piece;
-// Refresh this Piece's Blocks by deleting them then creating them anew.
+// void: Refresh this Piece's Blocks by deleting them then creating them anew.
 Tetris.Piece.prototype.remakeBlocks = function() {
-	var currentBlock, gridWidth, gridLength, relevantBlockArray, arrayLen, globalBlockX, globalBlockY, blockColor, newBlock;
+	var gridWidth, gridLength, relevantBlockArray, arrayLen, globalBlockX, globalBlockY, blockColor, newBlock;
 
 	// Destroy all Blocks in this.blocks[]
 	for (block in this.blocks) {
-		currentBlock = this.blocks[block];
-		currentBlock.destroy();
+		this.blocks[block].destroy();
 	}
 	this.blocks = [];
 
@@ -111,12 +128,16 @@ Tetris.Piece.prototype.remakeBlocks = function() {
 			}
 
 			// Create the Block and add it to this.blocks
-			newBlock = new Tetris.Block(this.game, this.gamePosToCoord(globalBlockX), this.gamePosToCoord(globalBlockY), this.isGravitized);
+			newBlock = new Tetris.Block(this.game, globalBlockX, globalBlockY, blockColor, this.isGravitized);
 			this.blocks.push(newBlock);
 		}
 	}
 }
-Tetris.Piece.prototype.moveDown = function() { // void: Moves all blocks in this piece down by 1 game unit.
+// void: Moves all blocks in this piece down by 1 game unit.
+Tetris.Piece.prototype.moveDown = function() {
+	for (block in this.blocks) {
+		this.blocks[block].moveDown();
+	}
 };
 Tetris.Piece.prototype.moveRight = function() { // void: Moves all blocks in this piece right by 1 game unit.
 };
@@ -124,17 +145,20 @@ Tetris.Piece.prototype.moveLeft = function() { // void: Moves all blocks in this
 };
 Tetris.Piece.prototype.rotate = function() { // void: Cycles the Piece's currentOrientation (UP, RIGHT, DOWN, LEFT).
 };
+// void: Apply this Piece's game properties to its block's sprites.
+Tetris.Piece.prototype.update = function() {
+	for (block in this.blocks) { this.blocks[block].update(); }
+};
 Tetris.Piece.prototype.settle = function() { // Block[]: Makes the Piece stationary, empties and returns its blocks.
 };
 
 
 // LogicHandler class extends GameObject
-Tetris.LogicHandler = function(game) {
+Tetris.LogicHandler = function(game, allPossiblePieces) {
 	// Properties
 	Tetris.GameObject.call(this, game);
-
 	// ShapeInfo[]; Holds ShapeInfo objects for all possible types of Pieces in the game.
-	this.allPossiblePieces = undefined;
+	this.allPossiblePieces = allPossiblePieces;
 	// Piece; The current, actively-falling piece.
 	this.currentPiece = undefined;
 	// Piece; The next piece to drop once the current piece has settled.
@@ -145,33 +169,109 @@ Tetris.LogicHandler = function(game) {
 	this.numOfTimeSteps = 0;
 	// num; The current player score.
 	this.score = 0;
+	// num; The total number of rows in the game board.
+	this.numOfRows = 20;
+	// num; The total number of columns in the game board.
+	this.numOfColumns = 10;
 };
 // Methods
 Tetris.LogicHandler.prototype = Object.create(Tetris.GameObject.prototype);
 Tetris.LogicHandler.prototype.constructor = Tetris.LogicHandler;
-Tetris.LogicHandler.prototype.constructor = Tetris.LogicHandler;
-Tetris.LogicHandler.prototype.executeStep = function() { // void: Executes the subroutines for 1 time step of the game.
-	console.log(this.numOfTimeSteps)
-
-	// A little fun...
-	if (this.numOfTimeSteps % 4 == 3) {
-		console.log("It's alive!!!");
-	} else {
-		console.log("Lub...dub...");
+// void: Executes 1 time step of the game.
+Tetris.LogicHandler.prototype.executeStep = function() {
+	// Step 1:
+	// Remove filled rows
+	if (this.removeFilledRows()) {
+		this.updateAllGameObjects();
+		return;
 	}
-	
-	// Increment numOfTimeSteps
-	this.numOfTimeSteps ++;
+	// OR
+	// Move gravitized blocks down
+	else if (this.moveGravitizedBlocks()) {
+		this.updateAllGameObjects();
+		return;
+	}
+	// OR
+	// Drop a new piece
+	else {
+		this.dropPiece();
+	}
+
+	// Step 2:
+	// Check block conditions and set gravity on all blocks.
+	// Check conditions on all blocks[], set gravity accordingly.
+	// Check conditions on currentPiece.blocks[], set gravity accordingly.
 };
-Tetris.LogicHandler.prototype.moveGravitizedBlocks = function() { // void: Moves gravitized blocks down 1 game unit.
+// boolean: Checks for completed rows, and flags all blocks in row to be removed. Returns true if a completed row was found.
+Tetris.LogicHandler.prototype.removeFilledRows = function() {
+	// Keep a running total of how many blocks are in a given row
+	var removed, rowTotals;
+	removed = false;
+	rowTotals = [];
+
+	for (block in this.blocks) {
+		rowTotals[this.blocks[block].gamePosY] += 1;
+	}
+	for (row in rowTotals) {
+		// If any of the rowTotals == this.numOfColumns...
+		if (rowTotals[row] == this.numOfColumns) {
+			// Mark the blocks in that row for removal.	
+			for (block in this.blocks) {
+				if (this.blocks[block].gamePosY == row) {
+					this.blocks[block].isRemoved = true;
+				}
+			}
+		}
+	}
+
+	return removed;
 };
-Tetris.LogicHandler.prototype.updateBlockPositions = function() { // void: Move blocks whose gamePos's have changed.
+// boolean: Moves gravitized blocks down 1 game unit.
+Tetris.LogicHandler.prototype.moveGravitizedBlocks = function() {
+	var moved = false;
+
+	// Move gravitized settled blocks
+	for (block in this.blocks) {
+		if (this.blocks[block].isGravitized) {
+			this.blocks[block].moveDown();
+			moved = true;
+		}
+	}
+	// Move gravitized currentPiece
+	if (this.currentPiece != undefined && this.currentPiece.isGravitized) {
+		this.currentPiece.moveDown();
+		moved = true;
+	}
+
+	return moved;
+};
+// void : Drops a new Piece.
+Tetris.LogicHandler.prototype.dropPiece = function() {
+	if (this.currentPiece == undefined) {
+		this.currentPiece = new Tetris.Piece(this.game, this.pickRandomPiece(), 0, 0, "UP", true);
+		this.nextPiece = this.pickRandomPiece();
+	}
+	else {
+		this.currentPiece = new Tetris.Piece(this.game, this.nextPiece, 0, 0, "UP", true);
+		this.nextPiece = this.pickRandomPiece();
+	}
+};
+// void: Update all GameObjects on the board.
+Tetris.LogicHandler.prototype.updateAllGameObjects = function() {
+	// Update this.blocks
+	for (block in this.blocks) {
+		this.blocks[block].update();
+	}
+	// Update this.currentPiece
+	if (this.currentPiece != undefined) { this.currentPiece.update(); }
 };
 Tetris.LogicHandler.prototype.checkCompletedRows = function() { // void: Check for completed rows, mark all blocks in said rows for removal, and increment the score.
 };
 Tetris.LogicHandler.prototype.deleteRemovedBlocks = function() { // void: Deletes blocks that have been flagged for removal from the game.
 };
-Tetris.LogicHandler.prototype.pickNextPiece = function() { // Piece: Returns a randomly selected Piece from allPossiblePieces.
+// Piece: Returns a randomly selected Piece from this.allPossiblePieces.
+Tetris.LogicHandler.prototype.pickRandomPiece = function() { 
+	return this.allPossiblePieces[Math.floor(Math.random() * this.allPossiblePieces.length)];
 };
 Tetris.LogicHandler.prototype.dropNextPiece = function() { // void: Transfer currentPiece blocks to blocks[] and delete currentPiece. Pick a piece from allPossiblePieces and deploy a copy of it as currentPiece.
 };
@@ -217,8 +317,144 @@ Tetris.Game.prototype.create = function() {
 	scoreLabel.scale = new PIXI.Point(1.5, 1.5);
 	scoreLabel.anchor = new PIXI.Point(0.5, 0.5);
 
-	// Create a LogicHandler object
-	var logic = new Tetris.LogicHandler(this.game);
+	// Create a ShapeInfo[] that contains all standard tetris pieces
+	var standardTetrisPieces = [
+		// The I piece
+		{
+			gridWidth: 4,
+			gridLength: 4,
+			orientation: {
+				UP:	[ 0, 1, 0, 0,
+					  0, 1, 0, 0,
+					  0, 1, 0, 0,
+					  0, 1, 0, 0 ],
+
+				RIGHT: [ 0, 0, 0, 0,
+					     1, 1, 1, 1,
+					     0, 0, 0, 0,
+					     0, 0, 0, 0 ],
+
+				DOWN: [ 0, 0, 1, 0,
+					    0, 0, 1, 0,
+					    0, 0, 1, 0,
+					    0, 0, 1, 0 ],
+
+				LEFT: [ 0, 0, 0, 0,
+					    0, 0, 0, 0,
+					    1, 1, 1, 1,
+					    0, 0, 0, 0 ]
+			}
+		},
+		// The L piece
+		{
+			gridWidth: 3,
+			gridLength: 3,
+			orientation: {
+				UP:	[ 0, 2, 0,
+					  0, 2, 0,
+					  0, 2, 2 ],
+
+				RIGHT:	[ 0, 0, 0,
+					      2, 2, 2,
+					      2, 0, 0 ],
+
+				DOWN:	[ 2, 2, 0,
+					      0, 2, 0,
+					      0, 2, 0 ],
+
+				LEFT:	[ 0, 0, 2,
+					      2, 2, 2,
+					      0, 0, 0 ]
+			}
+		},
+		// The J piece
+		{
+			gridWidth: 3,
+			gridLength: 3,
+			orientation: {
+				UP:	[ 0, 3, 0,
+					  0, 3, 0,
+					  3, 3, 0 ],
+
+				RIGHT:	[ 3, 0, 0,
+					      3, 3, 3,
+					      0, 0, 0 ],
+
+				DOWN:	[ 0, 3, 3,
+					      0, 3, 0,
+					      0, 3, 0 ],
+
+				LEFT:	[ 0, 0, 0,
+					      3, 3, 3,
+					      0, 0, 3 ]
+			}
+		},
+		// The S piece
+		{
+			gridWidth: 3,
+			gridLength: 3,
+			orientation: {
+				UP:	[ 0, 0, 0,
+					  0, 4, 4,
+					  4, 4, 0 ],
+
+				RIGHT:	[ 0, 4, 0,
+					      0, 4, 4,
+					      0, 0, 4 ],
+
+				DOWN:	[ 0, 4, 4,
+					      4, 4, 0,
+					      0, 0, 0 ],
+
+				LEFT:	[ 4, 0, 0,
+					      4, 4, 0,
+					      0, 4, 0 ]
+			}
+		},
+		// The Z piece
+		{
+			gridWidth: 3,
+			gridLength: 3,
+			orientation: {
+				UP:	[ 0, 0, 0,
+					  5, 5, 0,
+					  0, 5, 5 ],
+
+				RIGHT:	[ 0, 0, 5,
+					      0, 5, 5,
+					      0, 5, 0 ],
+
+				DOWN:	[ 5, 5, 0,
+					      0, 5, 5,
+					      0, 0, 0 ],
+
+				LEFT:	[ 0, 5, 0,
+					      5, 5, 0,
+					      5, 0, 0 ]
+			}
+		},
+		// The O piece
+		{
+			gridWidth: 2,
+			gridLength: 2,
+			orientation: {
+				UP:	[ 6, 6,
+					  6, 6 ],
+
+				RIGHT:	[ 6, 6,
+					      6, 6 ],
+
+				DOWN:	[ 6, 6,
+					      6, 6 ],
+
+				LEFT:	[ 6, 6,
+					      6, 6 ]
+			}
+		},
+	];
+
+	// Create the LogicHandler object
+	var logic = new Tetris.LogicHandler(this.game, standardTetrisPieces);
 
 	// Create a timer to determine the duration between each "step" of the game
 	var stepTimer = this.game.time.create(false) // autoDestroy false
