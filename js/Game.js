@@ -135,15 +135,37 @@ Tetris.Piece.prototype.remakeBlocks = function() {
 }
 // void: Moves all blocks in this piece down by 1 game unit.
 Tetris.Piece.prototype.moveDown = function() {
+	this.gamePosY += 1;
 	for (block in this.blocks) {
 		this.blocks[block].moveDown();
 	}
 };
-Tetris.Piece.prototype.moveRight = function() { // void: Moves all blocks in this piece right by 1 game unit.
+// void: Moves all blocks in this piece right by 1 game unit.
+Tetris.Piece.prototype.moveRight = function() {
+	this.gamePosX += 1;
+	for (block in this.blocks) {
+		this.blocks[block].moveRight();
+	}
 };
-Tetris.Piece.prototype.moveLeft = function() { // void: Moves all blocks in this piece left by 1 game unit.
+// void: Moves all blocks in this piece left by 1 game unit.
+Tetris.Piece.prototype.moveLeft = function() {
+	this.gamePosX -= 1;
+	for (block in this.blocks) {
+		this.blocks[block].moveLeft();
+	}
 };
-Tetris.Piece.prototype.rotate = function() { // void: Cycles the Piece's currentOrientation (UP, RIGHT, DOWN, LEFT).
+// void: Cycles the Piece's currentOrientation (UP, RIGHT, DOWN, LEFT).
+Tetris.Piece.prototype.rotate = function() {
+	var orientationCycle = {
+		UP: "RIGHT",
+		RIGHT: "DOWN",
+		DOWN: "LEFT",
+		LEFT: "UP"
+	};
+
+	this.currentOrientation = orientationCycle[this.currentOrientation];
+
+	this.remakeBlocks();
 };
 // void: Apply this Piece's game properties to its block's sprites.
 Tetris.Piece.prototype.update = function() {
@@ -154,9 +176,14 @@ Tetris.Piece.prototype.settle = function() { // Block[]: Makes the Piece station
 
 
 // LogicHandler class extends GameObject
-Tetris.LogicHandler = function(game, allPossiblePieces) {
+Tetris.LogicHandler = function(game, allPossiblePieces, initStepDuration) {
 	// Properties
 	Tetris.GameObject.call(this, game);
+	// num; The duration in milliseconds between game steps.
+	this.stepDuration = initStepDuration;
+	// Phaser.Timer; The timer that determines the length of each game step.
+	this.timer = this.game.time.create(false);
+	this.timer.loop(this.stepDuration, this.executeStep, this);
 	// ShapeInfo[]; Holds ShapeInfo objects for all possible types of Pieces in the game.
 	this.allPossiblePieces = allPossiblePieces;
 	// Piece; The current, actively-falling piece.
@@ -177,24 +204,45 @@ Tetris.LogicHandler = function(game, allPossiblePieces) {
 // Methods
 Tetris.LogicHandler.prototype = Object.create(Tetris.GameObject.prototype);
 Tetris.LogicHandler.prototype.constructor = Tetris.LogicHandler;
+// void: Starts the timer to call executeStep every stepDuration seconds.
+Tetris.LogicHandler.prototype.start = function() {
+	this.timer.start();
+};
+// void: Resumes the timer event if it was stopped.
+Tetris.LogicHandler.prototype.resume = function() {
+	this.timer.resume();
+};
+// void: Pauses the timer.
+Tetris.LogicHandler.prototype.stop = function() {
+	this.timer.stop();
+};
+// void: Removes all events on the timer. Sets this.stepDuration to a new value. Adds a new loop event to the timer.
+Tetris.LogicHandler.prototype.setStepDuration = function(milliseconds) {
+	this.timer.removeAll();
+	this.stepDuration = milliseconds;
+	this.timer.loop(this.stepDuration, this.executeStep, this);
+};
 // void: Executes 1 time step of the game.
 Tetris.LogicHandler.prototype.executeStep = function() {
 	// Step 1:
 	// Remove filled rows
 	if (this.removeFilledRows()) {
 		this.updateAllGameObjects();
+		this.numOfTimeSteps ++;
 		return;
 	}
 	// OR
 	// Move gravitized blocks down
 	else if (this.moveGravitizedBlocks()) {
 		this.updateAllGameObjects();
+		this.numOfTimeSteps ++;
 		return;
 	}
 	// OR
 	// Drop a new piece
 	else {
 		this.dropPiece();
+		this.numOfTimeSteps ++;
 	}
 
 	// Step 2:
@@ -248,11 +296,11 @@ Tetris.LogicHandler.prototype.moveGravitizedBlocks = function() {
 // void : Drops a new Piece.
 Tetris.LogicHandler.prototype.dropPiece = function() {
 	if (this.currentPiece == undefined) {
-		this.currentPiece = new Tetris.Piece(this.game, this.pickRandomPiece(), 0, 0, "UP", true);
+		this.currentPiece = new Tetris.Piece(this.game, this.pickRandomPiece(), 4, 0, "UP", true);
 		this.nextPiece = this.pickRandomPiece();
 	}
 	else {
-		this.currentPiece = new Tetris.Piece(this.game, this.nextPiece, 0, 0, "UP", true);
+		this.currentPiece = new Tetris.Piece(this.game, this.nextPiece, 4, 0, "UP", true);
 		this.nextPiece = this.pickRandomPiece();
 	}
 };
@@ -273,8 +321,6 @@ Tetris.LogicHandler.prototype.deleteRemovedBlocks = function() { // void: Delete
 Tetris.LogicHandler.prototype.pickRandomPiece = function() { 
 	return this.allPossiblePieces[Math.floor(Math.random() * this.allPossiblePieces.length)];
 };
-Tetris.LogicHandler.prototype.dropNextPiece = function() { // void: Transfer currentPiece blocks to blocks[] and delete currentPiece. Pick a piece from allPossiblePieces and deploy a copy of it as currentPiece.
-};
 Tetris.LogicHandler.prototype.checkBlockConditions = function() { // void: Check ground conditions on all blocks not in currentPiece; set gravity accordingly.
 };
 Tetris.LogicHandler.prototype.checkCurrentPieceConditions = function() { // void: Check ground conditions on all currentPiece blocks; set gravity accordingly.
@@ -282,43 +328,15 @@ Tetris.LogicHandler.prototype.checkCurrentPieceConditions = function() { // void
 
 // Game class: Its functions (init, preload, create, etc.) are called by the Phaser State Manager
 Tetris.Game = function(game) {
+
 };
 // Called by the State Manager before anything else.
 Tetris.Game.prototype.init = function() {
 };
 // Called by the State Manager after init and before create.
 Tetris.Game.prototype.preload = function() {
-	// Load image assets
-	this.load.image("divider-img", "../assets/divider.png")
-	this.load.image("score-label-img", "../assets/score-label.png")
-	this.load.image("next-label-img", "../assets/next-label.png")
-	this.load.image("red-block-img", "../assets/red-block.png")
-	this.load.image("orange-block-img", "../assets/orange-block.png")
-	this.load.image("yellow-block-img", "../assets/yellow-block.png")
-	this.load.image("green-block-img", "../assets/green-block.png")
-	this.load.image("blue-block-img", "../assets/blue-block.png")
-	this.load.image("violet-block-img", "../assets/violet-block.png")
-};
-// Called by the State Manager after init and preload.
-Tetris.Game.prototype.create = function() {
-	// Create the divider sprite
-	var divider = this.game.add.sprite(241.5, 0, "divider-img");
-	divider.scale = new PIXI.Point(1.5, 1.5);
-	divider.anchor = new PIXI.Point(0, 0);
-	this.game.physics.arcade.enable(divider);
-
-	// Create "Next" label
-	var nextLabel = this.game.add.sprite(312, 39, "next-label-img");
-	nextLabel.scale = new PIXI.Point(1.5, 1.5);
-	nextLabel.anchor = new PIXI.Point(0.5, 0.5);
-
-	// Create "Score" label
-	var scoreLabel = this.game.add.sprite(312, 411, "score-label-img");
-	scoreLabel.scale = new PIXI.Point(1.5, 1.5);
-	scoreLabel.anchor = new PIXI.Point(0.5, 0.5);
-
-	// Create a ShapeInfo[] that contains all standard tetris pieces
-	var standardTetrisPieces = [
+	// Create a ShapeInfo[] that contains all standard tetris piece shapes
+	this.standardTetrisPieces = [
 		// The I piece
 		{
 			gridWidth: 4,
@@ -453,15 +471,94 @@ Tetris.Game.prototype.create = function() {
 		},
 	];
 
-	// Create the LogicHandler object
-	var logic = new Tetris.LogicHandler(this.game, standardTetrisPieces);
+	// Create the logic handler
+	this.logic = new Tetris.LogicHandler(this.game, this.standardTetrisPieces, 500);
 
-	// Create a timer to determine the duration between each "step" of the game
-	var stepTimer = this.game.time.create(false) // autoDestroy false
-	stepTimer.loop(500, logic.executeStep, logic);
-	stepTimer.start();
+	// Load image assets
+	this.load.image("divider-img", "../assets/divider.png")
+	this.load.image("score-label-img", "../assets/score-label.png")
+	this.load.image("next-label-img", "../assets/next-label.png")
+	this.load.image("red-block-img", "../assets/red-block.png")
+	this.load.image("orange-block-img", "../assets/orange-block.png")
+	this.load.image("yellow-block-img", "../assets/yellow-block.png")
+	this.load.image("green-block-img", "../assets/green-block.png")
+	this.load.image("blue-block-img", "../assets/blue-block.png")
+	this.load.image("violet-block-img", "../assets/violet-block.png")
 };
+// Called by the State Manager after init and preload.
+Tetris.Game.prototype.create = function() {
+	// Create the divider sprite
+	var divider = this.game.add.sprite(241.5, 0, "divider-img");
+	divider.scale = new PIXI.Point(1.5, 1.5);
+	divider.anchor = new PIXI.Point(0, 0);
+	this.game.physics.arcade.enable(divider);
 
+	// Create "Next" label
+	var nextLabel = this.game.add.sprite(312, 39, "next-label-img");
+	nextLabel.scale = new PIXI.Point(1.5, 1.5);
+	nextLabel.anchor = new PIXI.Point(0.5, 0.5);
+
+	// Create "Score" label
+	var scoreLabel = this.game.add.sprite(312, 411, "score-label-img");
+	scoreLabel.scale = new PIXI.Point(1.5, 1.5);
+	scoreLabel.anchor = new PIXI.Point(0.5, 0.5);
+
+	// Create event handler for user input
+	this.game.input.keyboard.onDownCallback = function(e) {
+		switch (e.keyCode) {
+			case Phaser.Keyboard.UP:
+				this.logic.currentPiece.rotate();
+				this.logic.updateAllGameObjects();
+				break;
+			case Phaser.Keyboard.RIGHT:
+				this.logic.currentPiece.moveRight();
+				this.logic.updateAllGameObjects();
+				break;
+			case Phaser.Keyboard.DOWN:
+				this.logic.executeStep();
+				break;
+			case Phaser.Keyboard.LEFT:
+				this.logic.currentPiece.moveLeft();
+				this.logic.updateAllGameObjects();
+				break;
+		}
+	}.bind(this);
+
+	/*
+	// Create a timer to determine the duration between each "step" of the game
+	this.stepTimer = this.game.time.create(true) // autoDestroy true. It will be set again at the end of this.executeStep.
+	this.stepTimer.loop(500, this.logic.executeStep, this.logic);
+	this.stepTimer.start();
+	*/
+
+	// Start the game
+	this.logic.start();
+};
+// Called by World.update ~60hz.
+Tetris.Game.prototype.update = function() {
+	// User input
+
+	/*
+	// UP
+	if (this.game.input.keyboard.isDown(Phaser.Keyboard.UP)) {
+		this.logic.currentPiece.rotate();
+		this.logic.updateAllGameObjects();
+	}
+	// RIGHT
+	else if (this.game.input.keyboard.downDuration(Phaser.Keyboard.RIGHT, 10)) {
+		this.logic.currentPiece.moveRight();
+		this.logic.updateAllGameObjects();
+	}
+	// DOWN
+	else if (this.game.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
+	}
+	// LEFT
+	else if (this.game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
+		this.logic.currentPiece.moveLeft();
+		this.logic.updateAllGameObjects();
+	}
+	*/
+};
 
 
 

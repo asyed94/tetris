@@ -23,6 +23,8 @@ GameObject = {
 }
 
 LogicHandler extends GameObject = {
+  stepDuration: // num; The duration in milliseconds between game steps.
+  timer: // Phaser.Timer; The timer that determines the length of each game step.
   currentPiece: // Piece; The current, actively-falling piece.
   nextPiece: // ShapeInfo; The next piece to drop once the current piece has settled.
   allPossiblePieces: // ShapeInfo[]; Holds ShapeInfo objects for all possible types of Pieces in the game.
@@ -32,6 +34,10 @@ LogicHandler extends GameObject = {
 
   +LogicHandler(ShapeInfo[] allPossiblePieces): void // Create a new LogicHandler with the given Piece set.
 
+  +start(): void // Starts the timer to call executeStep every stepDuration seconds.
+  +resume(): void // Resumes the timer event if it was stopped.
+  +stop(): void // Pauses the timer events.
+  +setStepDuration(num milliseconds): void // Removes all events on the timer. Sets this.stepDuration to a new value. Adds a new loop event to the timer.
   +executeStep(): void // Executes the subroutines for 1 time step of the game.
 
   +moveGravitizedBlocks(): boolean // Moves gravitized GameObjects down 1 game unit. Returns true if anything was moved.
@@ -45,7 +51,6 @@ LogicHandler extends GameObject = {
   +deleteRemovedBlocks(): void // Deletes blocks that have been flagged for removal from the game.
 
   +pickRandomPiece(): Piece // Returns a randomly selected Piece from allPossiblePieces.
-  +dropNextPiece(): void // Transfer currentPiece blocks to blocks[] and delete currentPiece. Pick a piece from allPossiblePieces and deploy a copy of it as currentPiece.
 
   +checkBlockConditions(): void // Check ground conditions on all blocks not in currentPiece; set gravity accordingly.
   +checkCurrentPieceConditions() void // Check ground conditions on all currentPiece blocks; set gravity accordingly.
