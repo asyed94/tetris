@@ -319,13 +319,19 @@ Tetris.LogicHandler.prototype.pickRandomPiece = function() {
 };
 // boolean: Check if a block has breached the game board boundries. If boundries breached, returns true, otherwise, returns false.
 Tetris.LogicHandler.prototype.checkBoundries = function() {
-	var breached = false;
+	var breached, thisBlock;
+
+	breached = "none";
 	for (block in this.currentPiece.blocks) {
-		var thisBlock = this.currentPiece.blocks[block];
-		if (thisBlock.gamePosX < 0 || thisBlock.gamePosX > this.numOfColumns - 1) {
-			breached = true;
+		thisBlock = this.currentPiece.blocks[block];
+		if (thisBlock.gamePosX < 0) {
+			breached = "left";
+		}
+		if (thisBlock.gamePosX > this.numOfColumns - 1) {
+			breached = "right";
 		}
 	}
+
 	return breached;
 };
 Tetris.LogicHandler.prototype.checkBlockConditions = function() { // void: Check ground conditions on all blocks not in currentPiece; set gravity accordingly.
@@ -512,14 +518,24 @@ Tetris.Game.prototype.create = function() {
 
 	// Create event handler for user input
 	this.game.input.keyboard.onDownCallback = function(e) {
+		var breachedWall;
+
 		switch (e.keyCode) {
 			case Phaser.Keyboard.UP:
 				this.logic.currentPiece.rotate();
+				while (this.logic.checkBoundries() != "none") {
+					if (this.logic.checkBoundries() == "left") {
+						this.logic.currentPiece.moveRight();
+					}
+					if (this.logic.checkBoundries() == "right") {
+						this.logic.currentPiece.moveLeft();
+					}
+				}
 				this.logic.updateAllGameObjects();
 				break;
 			case Phaser.Keyboard.RIGHT:
 				this.logic.currentPiece.moveRight();
-				if (this.logic.checkBoundries()) {
+				if (this.logic.checkBoundries() == "right") {
 					this.logic.currentPiece.moveLeft();
 				}
 				this.logic.updateAllGameObjects();
@@ -529,7 +545,7 @@ Tetris.Game.prototype.create = function() {
 				break;
 			case Phaser.Keyboard.LEFT:
 				this.logic.currentPiece.moveLeft();
-				if (this.logic.checkBoundries()) {
+				if (this.logic.checkBoundries() == "left") {
 					this.logic.currentPiece.moveRight();
 				}
 				this.logic.updateAllGameObjects();

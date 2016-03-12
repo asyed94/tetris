@@ -48,7 +48,7 @@ LogicHandler extends GameObject = {
 
   +pickRandomPiece(): Piece // Returns a randomly selected Piece from allPossiblePieces.
 
-  +checkBoundries(): boolean // Check if a block has breached the game board boundries. If boundries breached, returns true, otherwise, returns false.
+  +checkBoundries(): string // Check if a block has breached the game board boundries. Returns "none" if no boundries breached. Returns "left" if left boundry breached. Returns "right" if right boundry breached.
   +checkBlockConditions(): void // Check ground conditions on all blocks not in currentPiece; set gravity accordingly.
   +checkCurrentPieceConditions() void // Check ground conditions on all currentPiece blocks; set gravity accordingly.
 }
