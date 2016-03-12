@@ -317,7 +317,7 @@ Tetris.LogicHandler.prototype.updateAllGameObjects = function() {
 Tetris.LogicHandler.prototype.pickRandomPiece = function() { 
 	return this.allPossiblePieces[Math.floor(Math.random() * this.allPossiblePieces.length)];
 };
-// boolean: Check if a block has breached the game board boundries. If boundries breached, returns true, otherwise, returns false.
+// string: Check if a block has breached the game board boundries. Returns "none" if no boundries breached. Returns "left" if left boundry breached. Returns "right" if right boundry breached. 
 Tetris.LogicHandler.prototype.checkBoundries = function() {
 	var breached, thisBlock;
 
