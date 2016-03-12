@@ -44,14 +44,11 @@ LogicHandler extends GameObject = {
   +removeFilledRows(): boolean // Checks for completed rows, and flags all blocks in row to be removed. Returns true if a completed row was found.
   +dropPiece(): void // Drops a new Piece.
 
-
-  +updateAllGameObjects() : void // Update all GameObjects on the board.
-
-  +checkCompletedRows(): void // Check for completed rows, mark all blocks in said rows for removal, and increment the score.
-  +deleteRemovedBlocks(): void // Deletes blocks that have been flagged for removal from the game.
+  +updateAllGameObjects() : void // Update all GameObjects on the board (moves the sprite, removes marked blocks).
 
   +pickRandomPiece(): Piece // Returns a randomly selected Piece from allPossiblePieces.
 
+  +checkBoundries(): boolean // Check if a block has breached the game board boundries. If boundries breached, returns true, otherwise, returns false.
   +checkBlockConditions(): void // Check ground conditions on all blocks not in currentPiece; set gravity accordingly.
   +checkCurrentPieceConditions() void // Check ground conditions on all currentPiece blocks; set gravity accordingly.
 }

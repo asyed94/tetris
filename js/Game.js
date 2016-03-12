@@ -313,13 +313,20 @@ Tetris.LogicHandler.prototype.updateAllGameObjects = function() {
 	// Update this.currentPiece
 	if (this.currentPiece != undefined) { this.currentPiece.update(); }
 };
-Tetris.LogicHandler.prototype.checkCompletedRows = function() { // void: Check for completed rows, mark all blocks in said rows for removal, and increment the score.
-};
-Tetris.LogicHandler.prototype.deleteRemovedBlocks = function() { // void: Deletes blocks that have been flagged for removal from the game.
-};
 // Piece: Returns a randomly selected Piece from this.allPossiblePieces.
 Tetris.LogicHandler.prototype.pickRandomPiece = function() { 
 	return this.allPossiblePieces[Math.floor(Math.random() * this.allPossiblePieces.length)];
+};
+// boolean: Check if a block has breached the game board boundries. If boundries breached, returns true, otherwise, returns false.
+Tetris.LogicHandler.prototype.checkBoundries = function() {
+	var breached = false;
+	for (block in this.currentPiece.blocks) {
+		var thisBlock = this.currentPiece.blocks[block];
+		if (thisBlock.gamePosX < 0 || thisBlock.gamePosX > this.numOfColumns - 1) {
+			breached = true;
+		}
+	}
+	return breached;
 };
 Tetris.LogicHandler.prototype.checkBlockConditions = function() { // void: Check ground conditions on all blocks not in currentPiece; set gravity accordingly.
 };
@@ -512,6 +519,9 @@ Tetris.Game.prototype.create = function() {
 				break;
 			case Phaser.Keyboard.RIGHT:
 				this.logic.currentPiece.moveRight();
+				if (this.logic.checkBoundries()) {
+					this.logic.currentPiece.moveLeft();
+				}
 				this.logic.updateAllGameObjects();
 				break;
 			case Phaser.Keyboard.DOWN:
@@ -519,45 +529,19 @@ Tetris.Game.prototype.create = function() {
 				break;
 			case Phaser.Keyboard.LEFT:
 				this.logic.currentPiece.moveLeft();
+				if (this.logic.checkBoundries()) {
+					this.logic.currentPiece.moveRight();
+				}
 				this.logic.updateAllGameObjects();
 				break;
 		}
 	}.bind(this);
-
-	/*
-	// Create a timer to determine the duration between each "step" of the game
-	this.stepTimer = this.game.time.create(true) // autoDestroy true. It will be set again at the end of this.executeStep.
-	this.stepTimer.loop(500, this.logic.executeStep, this.logic);
-	this.stepTimer.start();
-	*/
 
 	// Start the game
 	this.logic.start();
 };
 // Called by World.update ~60hz.
 Tetris.Game.prototype.update = function() {
-	// User input
-
-	/*
-	// UP
-	if (this.game.input.keyboard.isDown(Phaser.Keyboard.UP)) {
-		this.logic.currentPiece.rotate();
-		this.logic.updateAllGameObjects();
-	}
-	// RIGHT
-	else if (this.game.input.keyboard.downDuration(Phaser.Keyboard.RIGHT, 10)) {
-		this.logic.currentPiece.moveRight();
-		this.logic.updateAllGameObjects();
-	}
-	// DOWN
-	else if (this.game.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
-	}
-	// LEFT
-	else if (this.game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
-		this.logic.currentPiece.moveLeft();
-		this.logic.updateAllGameObjects();
-	}
-	*/
 };
 
 
