@@ -4,14 +4,15 @@ GAME FLOW
 
 On each time step:
   1-Remove filled rows
+    2-Set gravity for remaining blocks accordingly
   OR
   1-Move gravitized blocks down
+    2-Check for boundries and respond accordingly
+    2-Check for collisions and respond accordingly
   OR
   1-Drop a new piece
-
-  2-Check conditions and set gravity on remaining blocks
-    2a-Check conditions on all blocks[], set gravity accordingly.
-    2b-Check conditions on currentPiece.blocks[], set gravity accordingly.
+    2-Check boundries
+    2-Check collisions
 
 =======
 CLASSES
@@ -40,17 +41,16 @@ LogicHandler extends GameObject = {
   +setStepDuration(num milliseconds): void // Removes all events on the timer. Sets this.stepDuration to a new value. Adds a new loop event to the timer.
   +executeStep(): void // Executes the subroutines for 1 time step of the game.
 
-  +moveGravitizedBlocks(): boolean // Moves gravitized GameObjects down 1 game unit. Returns true if anything was moved.
+  +moveGravitizedBlocks(): boolean // Moves gravitized GameObjects down 1 game unit and sets their gravity to 0. Returns true if anything was moved.
   +removeFilledRows(): boolean // Checks for completed rows, and flags all blocks in row to be removed. Returns true if a completed row was found.
   +dropPiece(): void // Drops a new Piece.
 
   +updateAllGameObjects() : void // Update all GameObjects on the board (moves the sprite, removes marked blocks).
 
-  +pickRandomPiece(): Piece // Returns a randomly selected Piece from allPossiblePieces.
+  +pickRandomPiece(): ShapeInfo // Returns a randomly selected Piece from allPossiblePieces.
 
-  +checkBoundries(): string // Check if a block has breached the game board boundries. Returns "none" if no boundries breached. Returns "left" if left boundry breached. Returns "right" if right boundry breached.
-  +checkBlockConditions(): void // Check ground conditions on all blocks not in currentPiece; set gravity accordingly.
-  +checkCurrentPieceConditions() void // Check ground conditions on all currentPiece blocks; set gravity accordingly.
+  +checkBoundries(): string // Check if a block has breached the game board boundries. Returns "none" if no boundries breached. Returns "left" if left boundry breached. Returns "right" if right boundry breached. Returns "ground" if ground is breached. Returns "ceiling" if ceiling is breached.
+  +checkCollisions(): boolean // Returns true if any Blocks in currentPiece are overlapping any Blocks in this.blocks, otherwise returns false.
 }
 
 Block extends GameObject = {
@@ -61,6 +61,7 @@ Block extends GameObject = {
   isRemoved: // boolean; Will this block be removed from the game in the next time step?
 
   +Block(num gamePosX, num gamePosY, string color, boolean initGravitation): Block // Returns a Block object with the given parameters.
+  +moveUp(): void // Moves this block up by 1 game unit.
   +moveDown(): void // Moves this block down by 1 game unit.
   +moveRight(): void // Moves this block right by 1 game unit.
   +moveLeft(): void // Moves this block left by 1 game unit.
@@ -85,11 +86,14 @@ Piece extends GameObject = {
 
   +Piece(ShapeInfo shapeInfo, num gamePosX, num gamePosY, string initOrientation, boolean initGravity): Piece // Returns a Piece object with the given parameters.
   +remakeBlocks(): void // Refresh this Piece's Blocks by deleting them then creating them anew.
+  +moveUp(): void // Moves all blocks in this piece up by 1 game unit.
   +moveDown(): void // Moves all blocks in this piece down by 1 game unit.
   +moveRight(): void // Moves all blocks in this piece right by 1 game unit.
   +moveLeft(): void // Moves all blocks in this piece left by 1 game unit.
-  +rotate(): void // Cycles the Piece's currentOrientation (UP, RIGHT, DOWN, LEFT).
+  +rotateRight(): void // Cycles the Piece's currentOrientation (UP, RIGHT, DOWN, LEFT) to the right.
+  +rotateLeft(): void // Cycles the Piece's currentOrientation (UP, RIGHT, DOWN, LEFT) to the left.
   +update(): void // Apply this Piece's game properties to its block's sprites.
-  +settle(): Block[] // Makes the Piece stationary, empties and returns its blocks.
+  +setGravitized(boolean value): void // Sets isGravitized for all Block objects in this Piece to value.
+  +settle(): Block[] // Sets isGravitized for all Block objects in this Piece to false. Empties and returns its Blocks.
 }
 
