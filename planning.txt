@@ -3,12 +3,11 @@ GAME FLOW
 =========
 
 On each time step:
-  1-Remove filled rows
-    2-Set gravity for remaining blocks accordingly
-  OR
   1-Move gravitized blocks down
     2-Check for boundries and respond accordingly
+      3-Check for filled rows
     2-Check for collisions and respond accordingly
+      3-Check for filled rows
   OR
   1-Drop a new piece
     2-Check boundries
@@ -66,6 +65,7 @@ Block extends GameObject = {
   +moveRight(): void // Moves this block right by 1 game unit.
   +moveLeft(): void // Moves this block left by 1 game unit.
   +update(): void // Apply this blocks game properties to its sprite.
+  +markForRemoval(): void // Set this blocks isRemoved to true.
   +destroy(): void // Destroys the associated Phaser sprite.
 }
 

@@ -34,19 +34,19 @@ Tetris.Block.prototype = Object.create(Tetris.GameObject.prototype);
 // void: Moves this block up by 1 game unit.
 Tetris.Block.prototype.moveUp = function() {
 	this.gamePosY -= 1;
-}
+};
 // void: Moves this block down by 1 game unit.
 Tetris.Block.prototype.moveDown = function() {
 	this.gamePosY += 1;
-}
+};
 // void: Moves this block right by 1 game unit.
 Tetris.Block.prototype.moveRight = function() {
 	this.gamePosX += 1;
-}
+};
 // void: Moves this block left by 1 game unit.
 Tetris.Block.prototype.moveLeft = function() {
 	this.gamePosX -= 1;
-}
+};
 // void: Apply this block's game properties to its sprite.
 Tetris.Block.prototype.update = function() {
 	this.sprite.x = this.gamePosToCoord(this.gamePosX);
@@ -54,12 +54,16 @@ Tetris.Block.prototype.update = function() {
 
 	// If this block is to be removed, destroy it
 	if (this.isRemoved) { this.destroy(); }
-}
+};
+// void: Set this blocks isRemoved to true.
+Tetris.Block.prototype.markForRemoval = function() {
+	this.isRemoved = true;
+};
 // void: Destroy the block
 Tetris.Block.prototype.destroy = function() {
 	// Destroy the associated sprite
 	this.sprite.destroy();
-}
+};
 
 // Piece class extends GameObject
 Tetris.Piece = function(game, shapeInfo, gamePosX, gamePosY, initOrientation, initGravitation) {
@@ -273,14 +277,8 @@ Tetris.LogicHandler.prototype.setStepDuration = function(milliseconds) {
 Tetris.LogicHandler.prototype.executeStep = function() {
 	var pieceBlocks;
 
-	// Remove filled rows
-	if (this.removeFilledRows()) {
-		this.updateAllGameObjects();
-		this.numOfTimeSteps ++;
-		return;
-	}
-	// Or, Move gravitized blocks down
-	else if (this.moveGravitizedBlocks()) {
+	// Move gravitized blocks down
+	if (this.moveGravitizedBlocks()) {
 		// Check if a ground breach has occured.
 		if (this.checkBoundries() == "ground") {
 			// Move piece up, settle it, and drop a new piece
@@ -289,6 +287,7 @@ Tetris.LogicHandler.prototype.executeStep = function() {
 			for (block in pieceBlocks) {
 				this.blocks.push(pieceBlocks[block]);
 			}
+			this.removeFilledRows();
 			this.dropPiece();
 		}
 		// Check if a piece collision has occured.
@@ -299,6 +298,7 @@ Tetris.LogicHandler.prototype.executeStep = function() {
 			for (block in pieceBlocks) {
 				this.blocks.push(pieceBlocks[block]);
 			}
+			this.removeFilledRows();
 			this.dropPiece();
 		}
 		// Otherwise, re-gravitate currentPiece
@@ -322,21 +322,46 @@ Tetris.LogicHandler.prototype.executeStep = function() {
 };
 // boolean: Checks for completed rows, and flags all blocks in row to be removed. Returns true if a completed row was found.
 Tetris.LogicHandler.prototype.removeFilledRows = function() {
-	// Keep a running total of how many blocks are in a given row
-	var removed, rowTotals;
-	removed = false;
-	rowTotals = [];
+	var removed, currentBlock, currentIdx;
+	var rowTotals = [];
+	var filledRowIdxs = [];
 
+	// Count the number of blocks in each row
 	for (block in this.blocks) {
-		rowTotals[this.blocks[block].gamePosY] += 1;
+		if (rowTotals[this.blocks[block].gamePosY] == undefined) {
+			rowTotals[this.blocks[block].gamePosY] = 1;
+		}
+		else {
+			rowTotals[this.blocks[block].gamePosY] ++;
+		}
 	}
+
+	// Get the row numbers of all filled rows
 	for (row in rowTotals) {
-		// If any of the rowTotals == this.numOfColumns...
 		if (rowTotals[row] == this.numOfColumns) {
-			// Mark the blocks in that row for removal.	
-			for (block in this.blocks) {
-				if (this.blocks[block].gamePosY == row) {
-					this.blocks[block].isRemoved = true;
+			filledRowIdxs.push(row);
+		}
+	}
+
+	// If there are filled rows...
+	if (filledRowIdxs.length > 0) {
+		// Loop through all this.blocks...
+		for (block in this.blocks) {
+			currentBlock = this.blocks[block];
+			// Loop through all filledRowIdxs...
+			for (idx in filledRowIdxs) {
+				currentIdx = filledRowIdxs[idx];
+				// If current blocks gamePosY < current idx...
+				if (currentBlock.gamePosY < currentIdx) {
+					// Move the block down 1 space
+					currentBlock.moveDown();
+				}
+				// Else, If current blocks gamePosY == current idx...
+				else if (currentBlock.gamePosY == currentIdx) {
+					// Mark the block for removal
+					currentBlock.markForRemoval();
+					// Set removed to true
+					removed = true;
 				}
 			}
 		}
@@ -381,6 +406,10 @@ Tetris.LogicHandler.prototype.updateAllGameObjects = function() {
 	// Update this.blocks
 	for (block in this.blocks) {
 		this.blocks[block].update();
+	}
+	// Splice removed blocks from this.blocks
+	for (i = this.blocks.length - 1; i >= 0; i --) {
+		if (this.blocks[i].isRemoved) { this.blocks.splice(i, 1); }
 	}
 	// Update this.currentPiece
 	if (this.currentPiece != undefined) { this.currentPiece.update(); }
@@ -575,7 +604,7 @@ Tetris.Game.prototype.preload = function() {
 	];
 
 	// Create the logic handler
-	this.logic = new Tetris.LogicHandler(this.game, this.standardTetrisPieces, 500);
+	this.logic = new Tetris.LogicHandler(this.game, this.standardTetrisPieces, 700);
 
 	// Load image assets
 	this.load.image("divider-img", "../assets/divider.png")
