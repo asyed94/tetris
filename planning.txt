@@ -18,11 +18,14 @@ CLASSES
 =======
 
 GameObject = {
+  game: // Phaser.Game; Reference to the current Phaser.Game object.
+
   -gamePosToCoord(num gamePos): num // Converts the given gamePos into a pixel coordinate.
   -coordToGamePos(num coord): num // Converts the given pixel coordinate into a gamePos.
 }
 
 LogicHandler extends GameObject = {
+  gameOver: // boolean; Is the game over?
   stepDuration: // num; The duration in milliseconds between game steps.
   timer: // Phaser.Timer; The timer that determines the length of each game step.
   currentPiece: // Piece; The current, actively-falling piece.
@@ -39,15 +42,11 @@ LogicHandler extends GameObject = {
   +stop(): void // Pauses the timer events.
   +setStepDuration(num milliseconds): void // Removes all events on the timer. Sets this.stepDuration to a new value. Adds a new loop event to the timer.
   +executeStep(): void // Executes the subroutines for 1 time step of the game.
-
   +moveGravitizedBlocks(): boolean // Moves gravitized GameObjects down 1 game unit and sets their gravity to 0. Returns true if anything was moved.
   +removeFilledRows(): boolean // Checks for completed rows, and flags all blocks in row to be removed. Returns true if a completed row was found.
   +dropPiece(): void // Drops a new Piece.
-
   +updateAllGameObjects() : void // Update all GameObjects on the board (moves the sprite, removes marked blocks).
-
   +pickRandomPiece(): ShapeInfo // Returns a randomly selected Piece from allPossiblePieces.
-
   +checkBoundries(): string // Check if a block has breached the game board boundries. Returns "none" if no boundries breached. Returns "left" if left boundry breached. Returns "right" if right boundry breached. Returns "ground" if ground is breached. Returns "ceiling" if ceiling is breached.
   +checkCollisions(): boolean // Returns true if any Blocks in currentPiece are overlapping any Blocks in this.blocks, otherwise returns false.
 }
@@ -92,6 +91,7 @@ Piece extends GameObject = {
   +moveLeft(): void // Moves all blocks in this piece left by 1 game unit.
   +rotateRight(): void // Cycles the Piece's currentOrientation (UP, RIGHT, DOWN, LEFT) to the right.
   +rotateLeft(): void // Cycles the Piece's currentOrientation (UP, RIGHT, DOWN, LEFT) to the left.
+  +setPosition(num pixelPosX, num pixelPosY): void // Moves the piece to the given position.
   +update(): void // Apply this Piece's game properties to its block's sprites.
   +setGravitized(boolean value): void // Sets isGravitized for all Block objects in this Piece to value.
   +settle(): Block[] // Sets isGravitized for all Block objects in this Piece to false. Empties and returns its Blocks.

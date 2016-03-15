@@ -128,6 +128,19 @@ Tetris.Piece.prototype.rotateRight = function() {
 
 	this.remakeBlocks();
 };
+// void: Moves the piece to the given position using the center of the pieces grid as the anchor point.
+Tetris.Piece.prototype.setPosition = function(pixelPosX, pixelPosY) {
+	var xOffset, yOffset, currentBlock;
+
+	xOffset = this.gamePosToCoord(this.shapeInfo.gridWidth) / 2;
+	yOffset = this.gamePosToCoord(this.shapeInfo.gridLength) / 2;
+
+	for (block in this.blocks) {
+		currentBlock = this.blocks[block];
+		currentBlock.sprite.x += (pixelPosX - xOffset);
+		currentBlock.sprite.y += (pixelPosY - yOffset);
+	}
+};
 // void: Apply this Piece's game properties to its block's sprites.
 Tetris.Piece.prototype.update = function() {
 	for (block in this.blocks) {

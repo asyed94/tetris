@@ -2,6 +2,8 @@
 Tetris.LogicHandler = function(game, allPossiblePieces, initStepDuration) {
 	// Properties
 	Tetris.GameObject.call(this, game);
+	// boolean; Is the game over?
+	this.gameOver = false;
 	// num; The duration in milliseconds between game steps.
 	this.stepDuration = initStepDuration;
 	// Phaser.Timer; The timer that determines the length of each game step.
@@ -61,6 +63,10 @@ Tetris.LogicHandler.prototype.executeStep = function() {
 			}
 			this.removeFilledRows();
 			this.dropPiece();
+			if (this.checkCollisions()) {
+				this.stop();
+				this.gameOver = true;
+			}
 		}
 		// Check if a piece collision has occured.
 		else if (this.checkCollisions()) {
@@ -72,6 +78,10 @@ Tetris.LogicHandler.prototype.executeStep = function() {
 			}
 			this.removeFilledRows();
 			this.dropPiece();
+			if (this.checkCollisions()) {
+				this.stop();
+				this.gameOver = true;
+			}
 		}
 		// Otherwise, re-gravitate currentPiece
 		else {
@@ -88,7 +98,12 @@ Tetris.LogicHandler.prototype.executeStep = function() {
 	// Or, Drop a new piece
 	else {
 		this.dropPiece();
+		if (this.checkCollisions()) {
+			this.stop();
+			this.gameOver = true;
+		}
 		this.numOfTimeSteps ++;
+		this.updateAllGameObjects();
 		return;
 	}
 };
@@ -164,14 +179,23 @@ Tetris.LogicHandler.prototype.moveGravitizedBlocks = function() {
 };
 // void : Drops a new Piece.
 Tetris.LogicHandler.prototype.dropPiece = function() {
+	// Create new piece off-screen
 	if (this.currentPiece == undefined) {
-		this.currentPiece = new Tetris.Piece(this.game, this.pickRandomPiece(), 4, 0, "UP", true);
-		this.nextPiece = this.pickRandomPiece();
+		// Pick a random one
+		this.currentPiece = new Tetris.Piece(this.game, this.pickRandomPiece(), 4, -4, "UP", true);
 	}
 	else {
-		this.currentPiece = new Tetris.Piece(this.game, this.nextPiece, 4, 0, "UP", true);
-		this.nextPiece = this.pickRandomPiece();
+		// Use the nextPiece ShapeInfo to make currentPiece
+		this.currentPiece = new Tetris.Piece(this.game, this.nextPiece, 4, -4, "UP", true);
 	}
+
+	// Push it into the screen
+	while (this.checkBoundries() != "none") {
+		this.currentPiece.moveDown();
+	}
+
+	// Pick a new nextPiece
+	this.nextPiece = this.pickRandomPiece();
 };
 // void: Update all GameObjects on the board.
 Tetris.LogicHandler.prototype.updateAllGameObjects = function() {

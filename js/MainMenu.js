@@ -17,7 +17,7 @@ Tetris.MainMenu.prototype = {
 		// Make a funky menuSpinner
 		var menuSpinner = this.add.sprite(this.game.width / 2, this.game.height / 3, "menu-spinner");
 		menuSpinner.anchor = new PIXI.Point(0.5, 0.5);
-		menuSpinner.scale = new PIXI.Point(1.5, 1.5);
+		menuSpinner.scale = new PIXI.Point(2, 2);
 		this.game.physics.arcade.enable(menuSpinner);
 		menuSpinner.body.angularAcceleration = 20 * Math.PI;
 

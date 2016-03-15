@@ -4,7 +4,7 @@ Tetris.Block = function(game, gamePosX, gamePosY, color, initGravitation) {
 	Tetris.GameObject.call(this, game);
 	// Phaser.Sprite; Phaser Sprite object associated with this block.
 	this.sprite = this.game.add.sprite(this.gamePosToCoord(gamePosX), this.gamePosToCoord(gamePosY), color);
-	this.sprite.scale = new PIXI.Point(1.5, 1.5);
+	this.sprite.scale = new PIXI.Point(2, 2);
 	// num; Horizontal position of this block on the game board in block units. 0 is the left most position.
 	this.gamePosX = gamePosX; 
 	// num; Vertical position of this block on the game board in block units. 0 is the top most position.

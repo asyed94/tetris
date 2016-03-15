@@ -5,8 +5,8 @@ Tetris.GameObject = function(game) {
 };
 // Methods
 Tetris.GameObject.prototype.gamePosToCoord = function(gamePos) {
-	return ((gamePos * 1.5 * 16) + 1);
+	return ((gamePos * 2 * 16) + 1);
 };
 Tetris.GameObject.prototype.coordToGamePos = function(coord) {
-	return ((coord - 1) / (1.5 * 16));
+	return ((coord - 1) / (2 * 16));
 };
