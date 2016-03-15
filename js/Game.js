@@ -208,29 +208,64 @@ Tetris.Game.prototype.create = function() {
 
 	// Create event handler for user input
 	this.game.input.keyboard.onDownCallback = function(e) {
-		var breachedWall;
+		var correctionCounter = {
+			"right": 0,
+			"left": 0,
+			"up": 0,
+			"down": 0,
+		};
 
 		switch (e.keyCode) {
 			case Phaser.Keyboard.UP:
 				this.logic.currentPiece.rotateRight();
-				// If the rotation breaches a boundry, move the piece to correct it. In Tetris terms, perform a "wall kick".
-				while (this.logic.checkBoundries() != "none") {
-					if (this.logic.checkBoundries() == "left") {
-						this.logic.currentPiece.moveRight();
-					}
-					if (this.logic.checkBoundries() == "right") {
-						this.logic.currentPiece.moveLeft();
-					}
-					if (this.logic.checkBoundries() == "ground") {
-						this.logic.currentPiece.moveUp();
-					}
-					if (this.logic.checkBoundries() == "ceiling") {
-						this.logic.currentPiece.moveDown();
-					}
-				}
 				// If the rotation causes a block collision, undo the rotation.
 				if (this.logic.checkCollisions()) {
 					this.logic.currentPiece.rotateLeft();
+				}
+				// If the rotation breaches a boundry, move the piece to correct it. In Tetris terms, perform a "wall kick".
+				else if (this.logic.checkBoundries() != "none") {
+					while (this.logic.checkBoundries() != "none") {
+						if (this.logic.checkBoundries() == "left") {
+							this.logic.currentPiece.moveRight();
+							correctionCounter["right"] ++;
+						}
+						if (this.logic.checkBoundries() == "right") {
+							this.logic.currentPiece.moveLeft();
+							correctionCounter["left"] ++;
+						}
+						if (this.logic.checkBoundries() == "ground") {
+							this.logic.currentPiece.moveUp();
+							correctionCounter["up"] ++;
+						}
+						if (this.logic.checkBoundries() == "ceiling") {
+							this.logic.currentPiece.moveDown();
+							correctionCounter["down"] ++;
+						}
+					}
+					// If the correction caused a block collision, undo it and the rotation
+					if (this.logic.checkCollisions()) {
+						for (var key in correctionCounter) {
+							if (correctionCounter.hasOwnProperty(key)) {
+								for (var i = correctionCounter[key]; i > 0; i--){
+									switch (key) {
+										case "right":
+											this.logic.currentPiece.moveLeft();
+											break
+										case "left":
+											this.logic.currentPiece.moveRight();
+											break
+										case "up":
+											this.logic.currentPiece.moveDown();
+											break
+										case "down":
+											this.logic.currentPiece.moveUp();
+											break
+									}
+								}
+							}
+						}
+						this.logic.currentPiece.rotateLeft();
+					}
 				}
 				this.logic.updateAllGameObjects();
 				break;

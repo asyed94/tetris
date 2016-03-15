@@ -35,7 +35,7 @@ Tetris.GameOver.prototype.create = function() {
 	// Create event handler for play again
 	this.game.input.keyboard.onDownCallback = function(e) {
 		if (e.keyCode == Phaser.Keyboard.ENTER) {
-			this.game.state.start("Game");
+			this.game.state.start("MainMenu", true, true);
 		}
 	};
 };

@@ -36,6 +36,6 @@ Tetris.MainMenu.prototype = {
 
 	startGame: function() {
 		this.game.input.keyboard.onDownCallback = null;
-		this.game.state.start("Game");
+		this.game.state.start("Game", true, true);
 	}
 };
