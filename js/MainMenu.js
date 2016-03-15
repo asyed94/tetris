@@ -8,26 +8,26 @@ Tetris.MainMenu.prototype = {
 
 	preload: function() {
 
-		this.load.image("menu-spinner", "../assets/menu-spinner.png");
+		this.load.image("title-img", "../assets/main-menu-title.png");
+		this.load.image("deco-img", "../assets/main-menu-deco.png");
+		this.load.image("start-text-img", "../assets/main-menu-start-text.png");
 
 	},
 
 	create: function() {
+		// Create the title
+		var title = this.game.add.image(128 * 2, 55 * 2, "title-img");
+		title.scale = new PIXI.Point(2, 2);
+		title.anchor = new PIXI.Point(0.5, 0.5);
 
-		// Make a funky menuSpinner
-		var menuSpinner = this.add.sprite(this.game.width / 2, this.game.height / 3, "menu-spinner");
-		menuSpinner.anchor = new PIXI.Point(0.5, 0.5);
-		menuSpinner.scale = new PIXI.Point(2, 2);
-		this.game.physics.arcade.enable(menuSpinner);
-		menuSpinner.body.angularAcceleration = 20 * Math.PI;
+		// Create the deco
+		var deco = this.game.add.image(128 * 2, 160 * 2, "deco-img");
+		deco.scale = new PIXI.Point(2, 2);
+		deco.anchor = new PIXI.Point(0.5, 0.5);
 
-		// Menu screen text
-		var startText = this.add.text(this.game.width / 2, this.game.height / 3 * 2, "press any key\n to start", {
-			font: "bold 20pt Courier",
-			fontVariant: "small-caps",
-			fill: "yellow",
-			align: "center"
-		});
+		// Create the start-text
+		var startText = this.game.add.image(128 * 2, 265 * 2, "start-text-img");
+		startText.scale = new PIXI.Point(2, 2);
 		startText.anchor = new PIXI.Point(0.5, 0.5);
 
 		// On any key press, start the game
