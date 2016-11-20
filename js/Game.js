@@ -162,10 +162,14 @@ Tetris.Game.prototype.preload = function() {
 	];
 
 	// Create the logic handler
-	this.logic = new Tetris.LogicHandler(this.game, this.standardTetrisPieces, 700);
+	this.logic = new Tetris.LogicHandler(this.game, this.standardTetrisPieces, 200);
 
 	// Create the nextPiece holder
 	this.nextPiece = undefined;
+
+	// Create inputTimer, inputDelay
+	this.inputTimer = 0;
+	this.inputDelay = 120;
 
 	// Load image assets
 	this.load.image("divider-img", "../assets/divider.png")
@@ -305,12 +309,15 @@ Tetris.Game.prototype.create = function() {
 };
 // Called by World.update ~60hz.
 Tetris.Game.prototype.update = function() {
+	// If the game is over, change to the GameOver State.
 	if (this.logic.gameOver) {
 		this.game.state.start("GameOver", true, true, this.logic.numOfTimeSteps);
 	}
 
+	// Update the score display
 	this.scoreDisplayFont.text = this.logic.numOfTimeSteps.toString();
 
+	// Update the next piece display
 	if (this.logic.nextPiece != undefined) {
 		if (this.nextPiece == undefined) {
 			this.nextPiece = new Tetris.Piece(this.game, this.logic.nextPiece, 0, 0, "UP", false);
